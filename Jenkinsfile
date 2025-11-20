@@ -11,7 +11,7 @@ pipeline {
     }
 
     stages {
-        
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Vishalmahi07/ci-cd-sample-app.git'
@@ -24,9 +24,9 @@ pipeline {
                 aws configure set aws_access_key_id $ACCESS_KEY
                 aws configure set aws_secret_access_key $SECRET_KEY
                 aws configure set default.region $AWS_REGION
-
-                aws ecr get-login-password --region $AWS_REGION \
-                | docker login --username AWS --password-stdin \
+                
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin \
                 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                 '''
             }
@@ -46,6 +46,17 @@ pipeline {
             steps {
                 sh '''
                 docker push \
+                $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+                '''
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                sh '''
+                docker rm -f app || true
+                docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+                docker run -d -p 3000:3000 --name app \
                 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
                 '''
             }
