@@ -13,7 +13,8 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/Vishalmahi07/ci-cd-sample-app.git'
+                git branch: 'main', url: 'https://github.com/Vishalmahi07/ci-cd-sample-app.git'
+
             }
         }
 
