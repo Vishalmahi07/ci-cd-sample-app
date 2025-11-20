@@ -18,37 +18,27 @@ pipeline {
             }
         }
 
-        stage('Install Docker') {
+        stage('Install Docker & AWS CLI v2') {
             steps {
                 sh '''
                 sudo apt-get update -y
-                sudo apt-get install -y docker.io
+                sudo apt-get install -y docker.io unzip curl
                 sudo systemctl start docker
                 sudo systemctl enable docker
-                sudo usermod -aG docker jenkins
-                '''
-            }
-        }
-
-        stage('Install AWS CLI v2') {
-            steps {
-                sh '''
-                sudo apt-get update -y
-                sudo apt-get install -y unzip curl
+                sudo usermod -aG docker jenkins || true
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
                 unzip -o awscliv2.zip
-                sudo ./aws/install --update
-                aws --version
+                sudo ./aws/install || true
                 '''
             }
         }
 
-        stage('Docker Login to ECR') {
+        stage('Configure AWS & Docker Login to ECR') {
             steps {
                 sh '''
-                aws configure set aws_access_key_id $ACCESS_KEY
-                aws configure set aws_secret_access_key $SECRET_KEY
-                aws configure set default.region $AWS_REGION
+                export AWS_ACCESS_KEY_ID=$ACCESS_KEY
+                export AWS_SECRET_ACCESS_KEY=$SECRET_KEY
+                export AWS_DEFAULT_REGION=$AWS_REGION
 
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS --password-stdin \
@@ -77,3 +67,4 @@ pipeline {
         }
     }
 }
+
